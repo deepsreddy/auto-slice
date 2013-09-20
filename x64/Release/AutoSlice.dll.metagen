@@ -1,0 +1,81 @@
+ImageRuntimeVersion: v4.0.30319
+Assembly AutoSlice, Version=1.0.*, Culture=Invariant Language (Invariant Country): 
+	hash=SHA1, flags=PublicKey
+Assembly mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089: 
+	hash=None, flags=None
+Assembly System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089: 
+	hash=None, flags=None
+Assembly System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089: 
+	hash=None, flags=None
+Assembly System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089: 
+	hash=None, flags=None
+Class AutoSlicing.LengthHistogram: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Fields:
+    Double _XCoordinate : Public
+    Double _densitySummation : Public
+    Double _weightedDensityAverage : Public
+    Double _smoothedWeightedAverage : Public
+    SByte _PKFlag IsSignUnspecifiedByte : Public
+Class AutoSlicing.PreselectionItem: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(Double, Double, Double, Double, Boolean): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Fields:
+    Double LowerLenLimit : Public
+    Double UpperLenLimit : Public
+    Double CutoffDistanceValue : Public
+    Double CutoffDistanceMin : Public
+    Boolean _Real : Public
+Class AutoSlicing.CRawData: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Fields:
+    Double _moleculelength : Public
+    Double _distancescore : Public
+    Double _moleculedensity : Public
+Class AutoSlicing.CTraceMap: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(System.String): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Methods:
+    AssembleRawData(String, Double[], Double[], Double[,]): PrivateScope, Public, HideBySig
+    EvaluateProfiles(String): PrivateScope, Public, HideBySig
+    WriteTrace2TraceMap(Int32 IsConst, Int32 IsConst): PrivateScope, Public, HideBySig
+Class AutoSlicing.CLengthProfile: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Fields:
+    AutoSlicing.LengthHistogram[] lengthHisto : Public
+  Methods:
+    GenerateLengthProfile(LengthHistogram[], CRawData[], Int32 IsConst, Int32, String): PrivateScope, Public, HideBySig
+    Generate2ndorderSmoothedWeightedAverages(LengthHistogram[], String, Int32): PrivateScope, Public, HideBySig
+    SmoothingInterface(LengthHistogram[], Int32 IsConst): PrivateScope, Public, HideBySig
+    WriteRScript(String, String): PrivateScope, Public, HideBySig
+Class AutoSlicing.CAutoSlice: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+  :AutoSlicing.CLengthProfile
+    Void .ctor(System.String): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Fields:
+    System.Collections.Generic.List`1[AutoSlicing.CAutoSlice+finalSliceProperties] finalSlices : Public
+    System.Collections.Generic.List`1[AutoSlicing.PreselectionItem] preselectionItems : Public
+  Methods:
+    PerformAutoSlicing(Int32, LengthHistogram[], String): PrivateScope, Public, HideBySig
+Class AutoSlicing.CAutoSlice+finalSliceProperties: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Fields:
+    Boolean _real : Public
+    Int32 _sliceWidth : Public
+    Double _leftBoundary : Public
+    Double _rightBoundary : Public
+    Double _totalMolecules : Public
+    Double _minMolecules : Public
+    Double _percentMolecules : Public
+Class AutoSlicing.CBasicFunctions: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Methods:
+    SystemStringToCharArray(String): PrivateScope, Public, Static, HideBySig
+Class AutoSlicing.CScoreProfile: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Fields:
+    Double yBorders : Public
+    Double _YMin : Public
+    Double _YMax : Public
+  Methods:
+    GenerateScoreProfile(CRawData[], Int32, Int32, String, Double, Double, Int32): PrivateScope, Public, HideBySig

@@ -6,13 +6,16 @@
 #include <vector>
 #include <string>
 #include "TraceMap.h"
+#include "AutoSlice.h"
 using namespace std;
 using namespace System;
 using namespace System::Runtime::InteropServices;
 
 namespace AutoSlicing {
 
-#define YSCORE_THRESHOLD (0.15)
+#define YSCORE_LOWERTHRESHOLD (0.06)
+#define YSCORE_HIGHERTHRESHOLD (0.15)
+
 
 	public ref class CScoreProfile
 	{

@@ -50,13 +50,13 @@ namespace AutoSlicing
 				}
 				rawIndex++;
 			}
-        }
-        // Removed commented code here
+		}
+		// Removed commented code here
 
 		//Output
 		//Outputting the score summation (histogram) values for all the slices
 		//FSS: Output of these histograms are not needed
-        double avgDensity = 0;
+		double avgDensity = 0;
 		///TODO Take out file IO, or #DEFINE it for testing only
 		string fileName = "scoreProfile-Slice";
 		string ssliceNumber = std::to_string((long long)sliceNumber);
@@ -65,10 +65,10 @@ namespace AutoSlicing
 		ofstream scoreProfileFile(fileName);
 		scoreProfileFile << "Similarity Score\tDensity Summation\tDensity Average\n";
 		for(long i=0; i < yBins; i++)
-        {
-            avgDensity = (scoreHisto[i]->_densitySummation/(double) xBins);
+		{
+			avgDensity = (scoreHisto[i]->_densitySummation/(double) xBins);
 			scoreProfileFile << scoreHisto[i]->_YCoordinate << "\t" << abs(scoreHisto[i]->_densitySummation) << "\t" << avgDensity << "\n";
-        }
+		}
 		scoreProfileFile.close();
 		scoreProfileFile.clear();
 
@@ -76,7 +76,12 @@ namespace AutoSlicing
 //		{
 //			yBorders[sliceNumber-1] = FindYThreshold(yBins, 0.15); 
 //		}
-		yBorders = FindYThreshold(yBins, YSCORE_THRESHOLD);
+		//Find y-score threshold value corresponding to 6% or 15% (YSCORE_THRESHOLD) of the area within the y-axis density summation
+		//which is dependent on the slice length range
+		if(rightBoundary >= BOUNDARY_LENGTH)
+			yBorders = FindYThreshold(yBins, YSCORE_HIGHERTHRESHOLD);
+		else
+			yBorders = FindYThreshold(yBins, YSCORE_LOWERTHRESHOLD);
 
 		return true;
 	}
@@ -87,8 +92,8 @@ namespace AutoSlicing
 	{
 		double yBorder, sumMolecules = 0.0, prevSum = 0.0;
 
-        // The slice is examined from the top.
-        // When 15% of the total number of molecules have been accumulated, that Y coordinate is used as the preliminary upper bound of the slice 
+		// The slice is examined from the top.
+		// When 15% of the total number of molecules have been accumulated, that Y coordinate is used as the preliminary upper bound of the slice 
 		double _ThresholdMolecules = _totalMolecules*dThresholdPercent;
 
 		double prevPeakPosition, currPeakPosition;
@@ -99,7 +104,7 @@ namespace AutoSlicing
 		i--;
 		while(sumMolecules <= _ThresholdMolecules)
 		{
-		    prevSum = sumMolecules;
+			prevSum = sumMolecules;
 			sumMolecules += scoreHisto[i]->_densitySummation;
 			i--;
 		}
