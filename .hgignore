@@ -1,0 +1,26 @@
+syntax: glob
+x64/Release/BasicFunctions.obj
+x64/Release/CL.read.1.tlog
+x64/Release/vc110.pdb
+x64/Release/rc.write.1.tlog
+x64/Release/rc.read.1.tlog
+x64/Release/rc.command.1.tlog
+x64/Release/metagen.write.1.tlog
+x64/Release/metagen.read.1.tlog
+x64/Release/link.write.1.tlog
+x64/Release/link.read.1.tlog
+x64/Release/link.command.1.tlog
+x64/Release/link-rc.write.1.tlog
+x64/Release/link-rc.read.1.tlog
+x64/Release/link-cvtres.write.1.tlog
+x64/Release/link-cvtres.read.1.tlog
+x64/Release/cl.command.1.tlog
+x64/Release/TraceMap.obj
+x64/Release/TZRES.DLL.bi
+x64/Release/Stdafx.obj
+x64/Release/ScoreProfile.obj
+x64/Release/SGFilter.obj
+x64/Release/RSAENH.DLL.bi
+x64/Release/PreselectionItem.obj
+x64/Release/LengthProfile.obj
+x64/Release/CL.write.1.tlog
