@@ -7,6 +7,7 @@
 #include <string>
 #include "LengthHistogram.h"
 #include "PreselectionItem.h"
+#include "AutoSliceOptions.h"
 
 using namespace std;
 using namespace System;
@@ -36,16 +37,15 @@ namespace AutoSlicing {
 
             void WriteTrace2TraceMap(const int xBins, const int yBins);
 
+			//AutosliceOptions
+			CAutoSliceOptions ^cAutoSliceOptions;
+
 		private:
 			int xBins;
 			int yBins;
 			String ^_sDirectory;
 			array<CRawData ^> ^rawData;
 			array<LengthHistogram ^> ^lengthHisto;  //array holding the length histogram
-
-			//FSSTODO remove obsolete
-			//bool ReadFirstThreeLines(ifstream &rawTraceFile);
-			//bool WriteRScript(String ^sDirectory, String ^sErr);
 	};
 } //end of namespace AutoSlicing
 

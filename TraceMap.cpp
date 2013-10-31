@@ -13,6 +13,9 @@ namespace AutoSlicing {
 		_sDirectory = "";
 		xBins = 0;
 		yBins = 0;
+
+		//Creating reference for AutoSliceOptions
+		cAutoSliceOptions = gcnew CAutoSliceOptions();
 	}
 
 	CTraceMap::CTraceMap(String ^ folder)
@@ -20,6 +23,9 @@ namespace AutoSlicing {
 		_sDirectory = folder;
 		xBins = 0;
 		yBins = 0;
+
+		//Creating reference for AutoSliceOptions
+		cAutoSliceOptions = gcnew CAutoSliceOptions();
 	}
 
 	//Read raw data file - Trace2TraceMap_Molecules.txt
@@ -122,6 +128,9 @@ namespace AutoSlicing {
 	//Evaluate Profiles for length, & score profiles and auto-slicing
 	List<PreselectionItem ^>^ CTraceMap::EvaluateProfiles( String ^sErr)
 	{
+		//Read options
+		cAutoSliceOptions->ReadOptions();
+
 		CLengthProfile ^lengthProfile = gcnew CLengthProfile();
 		lengthProfile->Generate2ndorderSmoothedWeightedAverages(lengthHisto, _sDirectory, xBins);
 
@@ -187,73 +196,11 @@ namespace AutoSlicing {
 		xBoundariesFile.close();
 		xBoundariesFile.clear();
 
+		//Write settings in XML file
+		cAutoSliceOptions->WriteOptions();
+
 		return autoSlice->preselectionItems;
 	}
-
-	////Write r script for genertating maps with borders
-	//bool CTraceMap::WriteRScript(String ^sDirectory, String ^sErr)
-	//{
-	//	//char line[1000];
-	//	//int sliceCount, i = 0, leftBoundary, rightBoundary, minMolecules, maxMolecules;
-	//	//double tenPYThreshold, fifteenPYThreshold, TwentyPYThreshold, TwentyFivePYThreshold;
-	//	//array<int> ^xBorders;
-
-	//	//String ^fileName = gcnew String("Boundaries.txt");
-	//	//fileName = sDirectory + fileName;
-	//	//String ^rFileName = gcnew String("Trace2TraceMap-XYBorders.r");
-	//	//rFileName = sDirectory + rFileName;
-	//	////Convert System::String to char array to read in ofstream
-	//	//ifstream BoundariesFile((AutoSlicing::CBasicFunctions::SystemStringToCharArray(fileName)), std::iostream::in);
-	//	//ofstream RScriptFile((AutoSlicing::CBasicFunctions::SystemStringToCharArray(rFileName)), std::iostream::out);
-
-	//	//BoundariesFile.getline(line, 1000);
-	//	//BoundariesFile >> sliceCount;
-
-	//	////y-Borders - store the borders for each slice
-	//	//xBorders = gcnew array<int>(sliceCount*2);
-	//	//
-	//	//RScriptFile << "#gridmap\n";
-	//	//RScriptFile << "library(grid)\n";
-	//	//RScriptFile << "library(graphics)\n";
-	//	//RScriptFile << "library(lattice)\n";
-	//	//RScriptFile << "library(ggplot2)\n";
-	//	//RScriptFile << "tracemap <- read.table(\"Trace2TraceMap_Molecules.txt\",header=TRUE)\n";
-	//	//RScriptFile << "NumMolecules <- (tracemap$molecules)\n";
-	//	//RScriptFile << "png(\"Trace2TraceMap_XYBorders.png\",height=3000,width=4000,res=900, bg=\"white\")\n";
-	//	//RScriptFile << "q <- qplot(x=length,y=score,data=tracemap,geom=\"tile\",ylab=\"similarity score\", xlab=\"molecule length (microns)\", fill=log(NumMolecules)) + scale_fill_continuous(low=\"yellow\", high=\"dark red\")\n";
-
-	//	//while(i < sliceCount)
-	//	//{
-	//	//	BoundariesFile >> leftBoundary >> rightBoundary >> minMolecules >> maxMolecules;
-	//	//	RScriptFile << "q <- q + geom_vline(xintercept = " << leftBoundary << ", colour=\"black\", linetype=\"longdash\", size=0.2)\n"; 
-	//	//	RScriptFile << "q <- q + geom_vline(xintercept = " << rightBoundary << ", colour=\"red\", linetype=\"longdash\", size=0.2)\n"; 
-	//	//	xBorders[2*i] = leftBoundary;
-	//	//	xBorders[2*i+1] = rightBoundary;
-	//	//	i++;
-	//	//}
-
-	//	//i = 0;
-	//	//BoundariesFile >> sliceCount;
-	//	//while(i < sliceCount)
-	//	//{
-	//	//	BoundariesFile >> 	tenPYThreshold >> fifteenPYThreshold >> TwentyPYThreshold >> TwentyFivePYThreshold;
-	//	//	RScriptFile << "q <- q + geom_segment(aes(x=" << xBorders[2*i] <<",y=" << -1*tenPYThreshold << ", xend=" << xBorders[2*i+1] << ", yend=" << -1*tenPYThreshold << "), size=0.2, linetype=\"longdash\")\n";
-	//	//	RScriptFile << "q <- q + geom_segment(aes(x=" << xBorders[2*i] <<",y=" << -1*fifteenPYThreshold << ", xend=" << xBorders[2*i+1] << ", yend=" << -1*fifteenPYThreshold << "), size=0.2, linetype=\"longdash\")\n";
-	//	//	RScriptFile << "q <- q + geom_segment(aes(x=" << xBorders[2*i] <<",y=" << -1*TwentyPYThreshold << ", xend=" << xBorders[2*i+1] << ", yend=" << -1*TwentyPYThreshold << "), size=0.2, linetype=\"longdash\")\n";
-	//	//	RScriptFile << "q <- q + geom_segment(aes(x=" << xBorders[2*i] <<",y=" << -1*TwentyFivePYThreshold << ", xend=" << xBorders[2*i+1] << ", yend=" << -1*TwentyFivePYThreshold << "), size=0.2, linetype=\"longdash\")\n";
-	//	//	i++;
-	//	//}
-	//	//
-	//	//RScriptFile << "grid.newpage()\n";
-	//	//RScriptFile << "pushViewport(viewport(height=1.0,width=1.0))\n";
-	//	//RScriptFile << "q$grid.fill <- \"white\"\n";
-	//	//RScriptFile << "q <- q + theme_bw()\n";
-	//	//RScriptFile << "print(q,newpage=FALSE)\n";
-	//	//RScriptFile << "upViewport()\n";
-	//	//RScriptFile << "dev.off()\n";
-
-	//	return true;
-	//}
 
 	 //List<PreselectionItem ^>^ CTraceMap::PreselectionItems()
 	 //{
