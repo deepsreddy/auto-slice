@@ -9,7 +9,13 @@ namespace AutoSlicing
 	CScoreProfile::CScoreProfile(void)
 	{
 	}
-
+	//************************************************************************
+	//Constructor for initializing options
+	CScoreProfile::CScoreProfile(const CAutoSliceOptions ^cAutoSliceOptions)
+	{
+		sXMLOptions.operator=(cAutoSliceOptions);
+	}
+	//************************************************************************
 	//Estimate the score Profile: calculates the plain summation of score values in each slice defined by the left and right boundary in the length axis
 	bool CScoreProfile::GenerateScoreProfile(array<CRawData ^> ^vRawData, int xBins, int yBins, String ^sDirectory, double leftBoundary, double rightBoundary, int sliceNumber)
 	{
@@ -72,16 +78,12 @@ namespace AutoSlicing
 		scoreProfileFile.close();
 		scoreProfileFile.clear();
 
-//		if (sliceNumber-1 >= 0 )
-//		{
-//			yBorders[sliceNumber-1] = FindYThreshold(yBins, 0.15); 
-//		}
 		//Find y-score threshold value corresponding to 6% or 15% (YSCORE_THRESHOLD) of the area within the y-axis density summation
 		//which is dependent on the slice length range
-		if(rightBoundary >= BOUNDARY_LENGTH)
-			yBorders = FindYThreshold(yBins, YSCORE_HIGHERTHRESHOLD);
+		if(rightBoundary >= sXMLOptions._dBoundaryLength)
+			yBorders = FindYThreshold(yBins, sXMLOptions._dYScoreUpperLengthThreshold);
 		else
-			yBorders = FindYThreshold(yBins, YSCORE_LOWERTHRESHOLD);
+			yBorders = FindYThreshold(yBins, sXMLOptions._dYScoreLowerLengthThreshold);
 
 		return true;
 	}

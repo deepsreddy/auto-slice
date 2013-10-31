@@ -135,7 +135,7 @@ namespace AutoSlicing {
 		lengthProfile->Generate2ndorderSmoothedWeightedAverages(lengthHisto, _sDirectory, xBins);
 
 		//Create an instance of CAutoSlice for performing auto-slicing
-		CAutoSlice ^autoSlice = gcnew CAutoSlice(_sDirectory);
+		CAutoSlice ^autoSlice = gcnew CAutoSlice(_sDirectory, cAutoSliceOptions);
 		if(!autoSlice->PerformAutoSlicing(xBins, lengthHisto, sErr))
 		{
 			sErr->Format("Something wrong with auto slicing");
@@ -144,7 +144,7 @@ namespace AutoSlicing {
 		
 		//Create an instance of CScoreProfile for score histograms for each slice and estimation
 		//the thresholds on the y-axis
-		CScoreProfile ^scoreProfile = gcnew CScoreProfile();
+		CScoreProfile ^scoreProfile = gcnew CScoreProfile(cAutoSliceOptions);
 
 		//y-Borders - store the borders for each slice for the 15% threshold values
 //		scoreProfile->yBorders = gcnew array<double>(autoSlice->finalSlices->Count);

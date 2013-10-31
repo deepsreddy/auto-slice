@@ -13,13 +13,15 @@ namespace AutoSlicing {
 	}
 
 	//Constructor for initializing output directory
-	CAutoSlice::CAutoSlice(String ^sDirectory)
+	CAutoSlice::CAutoSlice(String ^sDirectory, const CAutoSliceOptions ^cAutoSliceOptions)
 	{
 		_sDirectory = sDirectory;
 		_UpperSliceMolecules = 0.0;
 		_LowerSliceMolecules = 0.0;
 		_iLowerSliceCount = 0;
 		_iUpperSliceCount = 0;
+
+		sXMLOptions.operator=(cAutoSliceOptions);
 	}
 
 	//Auto Slicing - external call for performing autoslicing, 
@@ -65,8 +67,7 @@ namespace AutoSlicing {
 			iCurrentPosition--;
 		initialProfile->_dCurrentSignal = lengthHisto1[iCurrentPosition]->_smoothedWeightedAverage;
 		initialProfile->_dNextSignal = lengthHisto1[iCurrentPosition+1]->_smoothedWeightedAverage;
-//		initialProfile->_dPreviousSignal = -1;
-//		initialProfile->_iPosition = iCurrentPosition;
+
 		if(iCurrentPosition > 0)
 		{
 			initialProfile->_dPreviousSignal = lengthHisto1[iCurrentPosition-1]->_smoothedWeightedAverage;
@@ -130,8 +131,8 @@ namespace AutoSlicing {
 		lengthHisto1[iCurrentPosition]->_PKFlag = 'T';
 
 
-		Console::WriteLine(L"Number of peak points: {0}", peakProfiles->Count);
-		Console::WriteLine(L"Number of trough points: {0}", troughProfiles->Count);
+		//Console::WriteLine(L"Number of peak points: {0}", peakProfiles->Count);
+		//Console::WriteLine(L"Number of trough points: {0}", troughProfiles->Count);
 
 		//Outputting the peak/trough positions in a file
 		//FSS: No need to output this file
@@ -200,7 +201,7 @@ namespace AutoSlicing {
 			tempSlice->_trough2Position = lengthHisto1[iEnd]->_XCoordinate;
 			tempSlice->_peakPosition = lengthHisto1[i]->_XCoordinate;
 
-			if(tempSlice->_trough2Position >= BOUNDARY_LENGTH)
+			if(tempSlice->_trough2Position >= sXMLOptions._dBoundaryLength)
 				upperMolecules += tMolecules;
 			else
 				lowerMolecules += tMolecules;
@@ -227,14 +228,13 @@ namespace AutoSlicing {
 		int i = 0, iStart, iEnd;
 		while(i < iCount)
 		{
-			if(sliceProfiles[i]->_trough2Position >= BOUNDARY_LENGTH)
+			if(sliceProfiles[i]->_trough2Position >= sXMLOptions._dBoundaryLength)
 				sliceProfiles[i]->_percentMolecules = ((sliceProfiles[i]->_totalMolecules/upperMolecules)*100.0);
 			else
 				sliceProfiles[i]->_percentMolecules = ((sliceProfiles[i]->_totalMolecules/lowerMolecules)*100.0);
 			i++;
 		}
 		
-
 		String ^fileName = gcnew String("peaktroughRatios.txt");
 		fileName = _sDirectory + fileName;
 
@@ -261,8 +261,6 @@ namespace AutoSlicing {
 		profileFile.close();
 		profileFile.clear();
 
-//		autoBoundaryDetection(iLengthHistoSize, lengthHisto1, sErr);
-
 		return true;
 	}
 
@@ -272,28 +270,27 @@ namespace AutoSlicing {
 	{
 		int iNumberofSlices = sliceProfiles->Count;
 		int iCurrentSlice = 0, iSliceCount = 0, iCurrIndex;
-
 		double leftBoundary, minMolecules = 100000000, totalMolecules;
 		double ratioThreshold, dMinPercentMolecules, dNumberMoleculesThreshold;
 		finalSliceProperties ^tempSlice = gcnew  finalSliceProperties();
 		finalSlices = gcnew List<finalSliceProperties ^>();
 
-		while(iCurrentSlice < (iNumberofSlices))
+		while(iCurrentSlice < iNumberofSlices)
 		{
 			finalSliceProperties ^tempSlice = gcnew finalSliceProperties();
 			leftBoundary = sliceProfiles[iCurrentSlice]->_trough1Position;
 
-			if(sliceProfiles[iCurrentSlice]->_trough2Position > BOUNDARY_LENGTH)
+			if(sliceProfiles[iCurrentSlice]->_trough2Position > sXMLOptions._dBoundaryLength)
 			{
-				dNumberMoleculesThreshold = NUMBEROFMOLECULES_UPPERLENGTH;
-				dMinPercentMolecules = MINIMUM_UPPERPERCENTMOLECULES;
-				ratioThreshold = TROUGHTOPEAKRATIO_UPPERLENGTH;
+				dNumberMoleculesThreshold = sXMLOptions._dMinimumNumberofMoleculesUpperLength;
+				dMinPercentMolecules = sXMLOptions._dMinimumUpperPercentMolecules;
+				ratioThreshold = sXMLOptions._dTroughtoPeakRatioUpperLengthLimit;
 			}
 			else
 			{
-				dNumberMoleculesThreshold = NUMBEROFMOLECULES_LOWERLENGTH;
-				dMinPercentMolecules = MINIMUM_LOWERPERCENTMOLECULES;
-				ratioThreshold = TROUGHTOPEAKRATIO_LOWERLENGTH;
+				dNumberMoleculesThreshold = sXMLOptions._dMinimumNumberofMoleculesLowerLength;
+				dMinPercentMolecules = sXMLOptions._dMinimumLowerPercentMolecules;
+				ratioThreshold = sXMLOptions._dTroughtoPeakRatioLowerLengthLimit;
 			}
 
 			//Discarding junk slices
@@ -310,16 +307,14 @@ namespace AutoSlicing {
 			minMolecules = 100000000;
 			totalMolecules = 0;
 
+			
 			//Check for the previous slice length and check for slice based on LOWER/UPPER length
-//			sliceMode = check4Slices(iCurrentSlice, iSliceCount);
-//			if(sliceMode == ADD)
-//			{
 			while((iCurrentSlice+1) < iNumberofSlices && (sliceProfiles[iCurrentSlice]->_trough2peakratio2 > ratioThreshold))
 			{
-				if(sliceProfiles[iCurrentSlice]->_trough2Position > BOUNDARY_LENGTH)
-					ratioThreshold = TROUGHTOPEAKRATIO_UPPERLENGTH;
+				if(sliceProfiles[iCurrentSlice]->_trough2Position > sXMLOptions._dBoundaryLength)
+					ratioThreshold = sXMLOptions._dTroughtoPeakRatioUpperLengthLimit;
 				else
-					ratioThreshold = TROUGHTOPEAKRATIO_LOWERLENGTH;
+					ratioThreshold = sXMLOptions._dTroughtoPeakRatioLowerLengthLimit;
 
 				
 				if(sliceProfiles[iCurrentSlice+1]->_trough2peakratio1 <= ratioThreshold && sliceProfiles[iCurrentSlice]->_trough2peakratio2 <= ratioThreshold)
@@ -333,7 +328,7 @@ namespace AutoSlicing {
 
 			tempSlice->_leftBoundary = leftBoundary;
 			tempSlice->_rightBoundary = sliceProfiles[iCurrentSlice]->_trough2Position;
-
+			
 			//Get total number of molecules in the slice
 			while(iCurrIndex <= iCurrentSlice)
 			{
@@ -342,19 +337,20 @@ namespace AutoSlicing {
 				totalMolecules += sliceProfiles[iCurrIndex]->_totalMolecules;
 				iCurrIndex++;
 			}
-
+			
 			tempSlice->_minMolecules = minMolecules;
 			tempSlice->_totalMolecules = totalMolecules;
-			if(tempSlice->_rightBoundary > BOUNDARY_LENGTH)
+			
+			if(tempSlice->_rightBoundary > sXMLOptions._dBoundaryLength)
 			{
-				dNumberMoleculesThreshold = NUMBEROFMOLECULES_UPPERLENGTH;
-				dMinPercentMolecules = MINIMUM_UPPERPERCENTMOLECULES;
+				dNumberMoleculesThreshold = sXMLOptions._dMinimumNumberofMoleculesUpperLength;
+				dMinPercentMolecules = sXMLOptions._dMinimumUpperPercentMolecules;
 				tempSlice->_percentMolecules = (totalMolecules/_UpperSliceMolecules)*100;
 			}
 			else
 			{
-				dNumberMoleculesThreshold = NUMBEROFMOLECULES_LOWERLENGTH;
-				dMinPercentMolecules = MINIMUM_LOWERPERCENTMOLECULES;
+				dNumberMoleculesThreshold = sXMLOptions._dMinimumNumberofMoleculesLowerLength;
+				dMinPercentMolecules = sXMLOptions._dMinimumLowerPercentMolecules;
 				tempSlice->_percentMolecules = (totalMolecules/_LowerSliceMolecules)*100;
 			}
 
@@ -369,14 +365,6 @@ namespace AutoSlicing {
 			finalSlices->Add(tempSlice);
 			iCurrentSlice++;
 		}
-
-//			tempSlice->_real = true;
-//			finalSlices->Add(tempSlice);
-//			iSliceCount++;
-////			}
-//			iCurrentSlice++;
-//		}
-
 
 		//Merge thin slices with slice width < 5.0 to the previous slice
 		int iSlices = (finalSlices->Count);
@@ -442,331 +430,4 @@ namespace AutoSlicing {
 		}
 		return true;
 	}
-
-#if 0
-	//Check for each slide to add or discard, returns '1' for 'Add', '0' for 'Discard' 
-	//Please note the code needs to be cleaned a bit
-	bool CAutoSlice::check4Slices(int &iCurrentSlicePosition, int &iSliceCount)
-	{
-		//default set to DISCARD the slice
-		double ratio1 = sliceProfiles[iCurrentSlicePosition]->_trough2peakratio1;
-		double ratio2 = sliceProfiles[iCurrentSlicePosition]->_trough2peakratio2;
-		double dTrough2PeakRatioThreshold;
-		double xPosition = sliceProfiles[iCurrentSlicePosition]->_peakPosition;
-		bool bLastSlice = false, bMode;
-		
-		if((iCurrentSlicePosition+1) == (sliceProfiles->Count))
-			bLastSlice = true;
-
-		if(iSliceCount > 0)
-		{
-			if(finalSlices[iSliceCount-1]->_rightBoundary > BOUNDARY_LENGTH)
-				dTrough2PeakRatioThreshold = TROUGHTOPEAKRATIO_UPPERLENGTH;
-			else
-				dTrough2PeakRatioThreshold = TROUGHTOPEAKRATIO_LOWERLENGTH;
-		}
-		else
-			dTrough2PeakRatioThreshold = TROUGHTOPEAKRATIO_LOWERLENGTH;
-
-		if(ratio1 <= dTrough2PeakRatioThreshold)
-		{
-			if(ratio2 <= dTrough2PeakRatioThreshold)
-			{
-				if(!bLastSlice)
-				{
-					if(sliceProfiles[iCurrentSlicePosition+1]->_trough1Position > BOUNDARY_LENGTH)
-						dTrough2PeakRatioThreshold = TROUGHTOPEAKRATIO_UPPERLENGTH;
-					else
-						dTrough2PeakRatioThreshold = TROUGHTOPEAKRATIO_LOWERLENGTH;
-
-					if(sliceProfiles[iCurrentSlicePosition+1]->_trough2peakratio1 > dTrough2PeakRatioThreshold)
-					{
-						if(sliceProfiles[iCurrentSlicePosition+1]->_trough2peakratio2 > dTrough2PeakRatioThreshold)
-						{
-							//Check for junk slice
-							if(!check4CurrentJunkSlice(iCurrentSlicePosition, (iSliceCount-1), dTrough2PeakRatioThreshold))
-								bMode = check4NextJunkSlice(iCurrentSlicePosition, sliceProfiles[iCurrentSlicePosition]->_totalMolecules);
-							else
-								return DISCARD;
-							
-							if(bMode)
-								return ADD;
-							else
-							{
-								//Advance to slices until the next slice is part of the current one
-								bMode = advanceSlices(iCurrentSlicePosition);
-								if(bMode)
-									return ADD;
-							}
-						}
-						else
-						{
-							//Confirm that its not junk slice
-							if(!check4CurrentJunkSlice(iCurrentSlicePosition, (iSliceCount-1), dTrough2PeakRatioThreshold))
-								bMode = check4NextJunkSlice(iCurrentSlicePosition, sliceProfiles[iCurrentSlicePosition]->_totalMolecules);
-							else
-								return DISCARD;
-
-							if(bMode == true)
-								return ADD;
-							else
-							{
-								//Advance to next slice which is part of the current slice
-								iCurrentSlicePosition++;
-								return ADD;
-							}
-						}
-					}
-					else
-					{
-						if(!check4CurrentJunkSlice(iCurrentSlicePosition, (iSliceCount-1), dTrough2PeakRatioThreshold))
-							return ADD;
-					}
-				}
-				else
-				{
-					//Check if the last slice is junk
-					if(!check4CurrentJunkSlice(iCurrentSlicePosition, (iSliceCount-1), dTrough2PeakRatioThreshold))
-						bMode = check4NextJunkSlice(iCurrentSlicePosition, sliceProfiles[iCurrentSlicePosition]->_totalMolecules);
-					else
-						return DISCARD;
-
-					if(bMode == true)
-						return DISCARD;
-					else
-						return ADD;
-				}
-			}
-			else	
-			{
-				if(!bLastSlice)
-				{
-					//check for junk slice
-					if(!check4CurrentJunkSlice(iCurrentSlicePosition, (iSliceCount-1), dTrough2PeakRatioThreshold))
-						bMode = check4NextJunkSlice(iCurrentSlicePosition, sliceProfiles[iCurrentSlicePosition]->_totalMolecules);
-					else
-						return DISCARD;
-
-					if(bMode == true)
-						return DISCARD;
-
-					//sliceWidth = (sliceProfiles[iCurrentSlicePosition]->_trough2Position-sliceProfiles[iCurrentSlicePosition]->_trough1Position);
-					//if( (sliceWidth < 5) || sliceProfiles[iCurrentSlicePosition]->_totalMolecules < MIN_NUMBEROFMOLECULES)
-						//return DISCARD;
-			
-					//Advance to where the next slice is part of the current slice
-					bMode = advanceSlices(iCurrentSlicePosition);
-
-					if(bMode)
-						return ADD;
-				}
-				else
-				{
-					//Check if the last slice is junk
-					if(!check4CurrentJunkSlice(iCurrentSlicePosition, (iSliceCount-1), dTrough2PeakRatioThreshold))
-						bMode = check4NextJunkSlice(iCurrentSlicePosition, sliceProfiles[iCurrentSlicePosition]->_totalMolecules);
-					else
-						return DISCARD;
-
-					if(bMode == true)
-						return DISCARD;
-					else
-						return ADD;
-				}
-			}
-		}
-		else
-		{
-			//Advance until we get <LIMIT ratio1 & possibly discard very thin slices with less molecules
-			//if(ratio2 <= TROUGHTOPEAKRATIO_LOWERLENGTH)
-			{
-				//sliceWidth = (sliceProfiles[iCurrentSlicePosition]->_trough2Position-sliceProfiles[iCurrentSlicePosition]->_trough1Position);
-				if(!bLastSlice)
-				{
-					//check for junk slice
-					if(!check4CurrentJunkSlice(iCurrentSlicePosition, (iSliceCount-1), dTrough2PeakRatioThreshold))
-						bMode = check4NextJunkSlice(iCurrentSlicePosition, sliceProfiles[iCurrentSlicePosition]->_totalMolecules);
-					else
-						return DISCARD;
-
-					if(bMode == true)
-						return DISCARD;
-
-					//Advance to where the next slice is part of the current slice
-					bMode = advanceSlices(iCurrentSlicePosition);
-
-					if(bMode)
-						return ADD;
-				}
-				else
-				{
-					//Check if the last slice is junk
-					if(!check4CurrentJunkSlice(iCurrentSlicePosition, (iSliceCount-1),  dTrough2PeakRatioThreshold))
-						bMode = check4NextJunkSlice(iCurrentSlicePosition, sliceProfiles[iCurrentSlicePosition]->_totalMolecules);
-					else
-						return DISCARD;
-
-					if(bMode == true)
-						return DISCARD;
-					else
-						return ADD;
-				}
-			}
-		}
-	
-		return DISCARD;
-	}
-
-	//Check for current slice if its junk or not
-	bool CAutoSlice::check4CurrentJunkSlice(int &iCurrentSlicePosition, int iSlicePosition, double dRatioThreshold)
-	{
-		double dPercentMoleculesThreshold;
-		double dNumberMoleculesThreshold, ratio, sliceWidth;
-
-		sliceWidth = (sliceProfiles[iCurrentSlicePosition]->_trough2Position-sliceProfiles[iCurrentSlicePosition]->_trough1Position);
-
-		if(iSlicePosition <= 0 || iCurrentSlicePosition <=0)
-			return false;
-
-		///TODO check this - looks wrong...
-
-		//if(sliceProfiles[iCurrentSlicePosition]->_trough1Position > BOUNDARY_LENGTH)
-		if(finalSlices[iSlicePosition]->_rightBoundary > BOUNDARY_LENGTH)
-		{
-			dPercentMoleculesThreshold = PERCENTMOLECULES_UPPERLENGTH;
-			dNumberMoleculesThreshold = NUMBEROFMOLECULES_UPPERLENGTH;
-		}
-		else
-		{
-			dPercentMoleculesThreshold = PERCENTMOLECULES_LOWERLENGTH;
-			dNumberMoleculesThreshold = NUMBEROFMOLECULES_LOWERLENGTH;
-		}
-
-		if(finalSlices[iSlicePosition]->_rightBoundary > BOUNDARY_LENGTH)
-			dPercentMoleculesThreshold = PERCENTMOLECULES_UPPERSLICETHRESHOLD;	// this overwrites what was just done above
-		else
-			dPercentMoleculesThreshold = PERCENTMOLECULES_LOWERSLICETHRESHOLD;
-	
-		ratio = (sliceProfiles[iCurrentSlicePosition]->_totalMolecules/finalSlices[iSlicePosition]->_minMolecules);
-
-		if(sliceProfiles[iCurrentSlicePosition]->_trough2peakratio1 >= dRatioThreshold && sliceProfiles[iCurrentSlicePosition]->_trough2peakratio2 >= dRatioThreshold)
-        {
-            //  FSS - the line commented out was added by FSS to replace the next line - which is correct?
-            //if(ratio < dPercentMoleculesThreshold)
-			if(ratio < dPercentMoleculesThreshold || sliceWidth < 5.0)
-				return true;
-			else if(sliceProfiles[iCurrentSlicePosition]->_totalMolecules <= dNumberMoleculesThreshold)
-				return true;
-		}
-		else if(sliceProfiles[iCurrentSlicePosition]->_trough2peakratio1 >= dRatioThreshold || sliceProfiles[iCurrentSlicePosition]->_trough2peakratio2 >= dRatioThreshold)
-		{
-			if(ratio < dPercentMoleculesThreshold)
-				return true;
-			else if(sliceProfiles[iCurrentSlicePosition]->_totalMolecules <= dNumberMoleculesThreshold)
-				return true;
-		}
-
-		//ratio = (sliceProfiles[iCurrentSlicePosition]->_totalMolecules/sliceProfiles[iCurrentSlicePosition-1]->_totalMolecules);
-
-		///TODO check this logic!
-
-		if(ratio < dPercentMoleculesThreshold)
-				return true;
-		else if(sliceProfiles[iCurrentSlicePosition]->_totalMolecules < dNumberMoleculesThreshold)
-			return true;
-		else if(sliceWidth < 5.0 && ratio < dPercentMoleculesThreshold)	// can't get here? (already returned true above...)
-			return true;
-		else 
-			return false;
-	}
-
-	//Check for if the next slice is junk or not
-	bool CAutoSlice::check4NextJunkSlice(int &iCurrentSlicePosition, int iNumberMoleculesComparison)
-	{
-		double dPercentMoleculesThreshold;
-        double dNumberMoleculesThreshold, ratio;
-        //  FSS - added the following variable and all code related to it
-        double dPercentMoleculesJunkThreshold;
-
-		if(iCurrentSlicePosition < (sliceProfiles->Count-1))
-		{
-			if(sliceProfiles[iCurrentSlicePosition+1]->_trough1Position > BOUNDARY_LENGTH)
-			{
-				dPercentMoleculesThreshold = PERCENTMOLECULES_UPPERLENGTH;
-				dPercentMoleculesJunkThreshold = PERCENTHIGHERLENGTHMOLECULES_JUNKTHRESHOLD;
-			}
-			else
-			{
-				dPercentMoleculesThreshold = PERCENTMOLECULES_LOWERLENGTH;
-				dPercentMoleculesJunkThreshold = PERCENTLOWERLENGTHMOLECULES_JUNKTHRESHOLD;
-			}
-		}
-
-		if(sliceProfiles[iCurrentSlicePosition]->_trough1Position > BOUNDARY_LENGTH)
-			dNumberMoleculesThreshold = NUMBEROFMOLECULES_UPPERLENGTH;
-		else
-			dNumberMoleculesThreshold = NUMBEROFMOLECULES_LOWERLENGTH;
-	
-		//Check for junk slices
-		if(iCurrentSlicePosition < (sliceProfiles->Count-1))
-		{
-			//ratio = (sliceProfiles[iCurrentSlicePosition+1]->_totalMolecules/sliceProfiles[iCurrentSlicePosition]->_totalMolecules);
-			ratio = (sliceProfiles[iCurrentSlicePosition+1]->_totalMolecules/iNumberMoleculesComparison);
-
-			if(ratio < dPercentMoleculesThreshold)
-                return true;
-            //  FSS - commented out the following two lines
-			//else if(sliceProfiles[iCurrentSlicePosition+1]->_totalMolecules < dNumberMoleculesThreshold)
-			//	return true;
-			else if(sliceProfiles[iCurrentSlicePosition+1]->_trough2peakratio1 >= TROUGHTOPEAKRATIO_LOWERLENGTH && sliceProfiles[iCurrentSlicePosition+1]->_trough2peakratio2 >= TROUGHTOPEAKRATIO_LOWERLENGTH)
-			{
-				//if(ratio <= PERCENTMOLECULES_LOWERLENGTH)
-				if(ratio <= dPercentMoleculesJunkThreshold)
-					return true;
-				else
-					return false;
-			}
-			else
-				return false;
-		}
-        //  FSS - commented out the following two lines
-		//else if(sliceProfiles[iCurrentSlicePosition]->_totalMolecules < dNumberMoleculesThreshold)
-		//	return true;
-		else
-			return false;
-	}
-
-	//Advance slices until they are part of the current one
-	bool CAutoSlice::advanceSlices(int &iCurrentSlicePosition)
-	{
-		double dTrough2PeakRatioThreshold;
-		bool bIncrement = false, bMode = false;
-		int iCurrSlice = iCurrentSlicePosition;
-		Console::WriteLine(L"Entering advanceSlices() - iCurrentSlicePosition: {0}", iCurrentSlicePosition);
-
-		if(sliceProfiles[iCurrentSlicePosition+1]->_trough1Position > BOUNDARY_LENGTH)
-			dTrough2PeakRatioThreshold = TROUGHTOPEAKRATIO_UPPERLENGTH;
-		else
-			dTrough2PeakRatioThreshold = TROUGHTOPEAKRATIO_LOWERLENGTH;
-
-		while(iCurrentSlicePosition < (sliceProfiles->Count - 1) && sliceProfiles[iCurrentSlicePosition+1]->_trough2peakratio2 > dTrough2PeakRatioThreshold)
-		{
-			bMode = check4NextJunkSlice(iCurrentSlicePosition, sliceProfiles[iCurrSlice]->_totalMolecules);
-			if(!bMode)
-				iCurrSlice++;
-			iCurrentSlicePosition++;
-		}
-		///TODO May want to remove one of these? Increments above in While loop then again here - skips a slice?
-		//if(bIncrement)
-		//  FSSTODO - JEP 7/8/2013 - added the following conditional to avoid an exception after returning to the calling function
-		if(iCurrentSlicePosition < (sliceProfiles->Count - 1))
-		{
-			iCurrentSlicePosition++;
-		}
-		// Console::WriteLine(L"Skipped incrementing iCurrentSlicePosition");
-		Console::WriteLine(L" leaving advanceSlices() - iCurrentSlicePosition: {0}", iCurrentSlicePosition);
-
-		return true;
-	}
-#endif
 }
