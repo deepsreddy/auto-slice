@@ -54,7 +54,7 @@ namespace AutoSlicing {
 		double dCurrentSignal;
 		double dNextSignal;
 		double dPreviousSignal;
-		int iCurrentPosition = 0;
+		int iCurrentPosition = 0, iNextPosition, iPreviousPosition;
 
 		profileProperties^ initialProfile = gcnew profileProperties();
 
@@ -87,8 +87,14 @@ namespace AutoSlicing {
 		while (iCurrentPosition < (iLengthHistoSize-1))
 		{
 			dCurrentSignal = lengthHisto1[iCurrentPosition]->_smoothedWeightedAverage;
-			dNextSignal = lengthHisto1[iCurrentPosition+1]->_smoothedWeightedAverage;
-			dPreviousSignal = lengthHisto1[iCurrentPosition-1]->_smoothedWeightedAverage;
+
+			//dNextSignal = lengthHisto1[iCurrentPosition+1]->_smoothedWeightedAverage;
+			iNextPosition = FindNextPosition(iLengthHistoSize, lengthHisto1, iCurrentPosition);
+			dNextSignal = lengthHisto1[iNextPosition]->_smoothedWeightedAverage;
+
+			//dPreviousSignal = lengthHisto1[iCurrentPosition-1]->_smoothedWeightedAverage;
+			iPreviousPosition = FindPreviousPosition(iLengthHistoSize, lengthHisto1, iCurrentPosition);
+			dPreviousSignal = lengthHisto1[iPreviousPosition]->_smoothedWeightedAverage;
 
 			diff1 = dPreviousSignal - dCurrentSignal;
 			diff2 = dNextSignal - dCurrentSignal;
@@ -113,11 +119,14 @@ namespace AutoSlicing {
 					peakProfiles->Add(tempProfile);
 				}
 			}
-			iCurrentPosition++;
+
+			//Advance current position
+			iCurrentPosition = FindNextPosition(iLengthHistoSize, lengthHisto1, iCurrentPosition);
 		}
 
 		//Go back to the last position
-		iCurrentPosition--;
+		if(iCurrentPosition > (iLengthHistoSize-1))
+			iCurrentPosition = (iLengthHistoSize-1);
 
 		//Add last position as trough
 		profileProperties^ tempProfile = gcnew profileProperties();
@@ -161,6 +170,44 @@ namespace AutoSlicing {
 		return true;
 	}
 
+	//Estimate next position
+	int CAutoSlice::FindNextPosition(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1, int iCurrentPosition)
+	{
+		int iNextPosition = iCurrentPosition+1;
+		double dDiff;
+
+		if(iNextPosition <= (iLengthHistoSize-1))
+			dDiff = abs(lengthHisto1[iNextPosition]->_smoothedWeightedAverage - lengthHisto1[iCurrentPosition]->_smoothedWeightedAverage);
+		else
+			return iCurrentPosition;
+
+		while(dDiff < EQUALITY_TOLERANCE && iNextPosition < (iLengthHistoSize-1))
+		{
+			iNextPosition++;
+			dDiff = abs(lengthHisto1[iNextPosition]->_smoothedWeightedAverage - lengthHisto1[iCurrentPosition]->_smoothedWeightedAverage);
+		}
+
+		return iNextPosition;
+	}
+
+	//Estimate previous position
+	int CAutoSlice::FindPreviousPosition(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1, int iCurrentPosition)
+	{
+		int iPreviousPosition = iCurrentPosition-1;
+		double dDiff;
+
+		if(iCurrentPosition > 0)
+			dDiff = abs(lengthHisto1[iPreviousPosition]->_smoothedWeightedAverage - lengthHisto1[iCurrentPosition]->_smoothedWeightedAverage);
+
+		while(dDiff < EQUALITY_TOLERANCE && iPreviousPosition > 0)
+		{
+			iPreviousPosition--;
+			dDiff = abs(lengthHisto1[iPreviousPosition]->_smoothedWeightedAverage - lengthHisto1[iCurrentPosition]->_smoothedWeightedAverage);
+		}
+
+		return iPreviousPosition;
+	}
+
 	//Clean profiles for adding slices
 	//The name of this function might be misleading. This function basically creates preliminary slices by taking trough-peak-trough positions
 	//and calculates the trough1/peak & trough2/peak ratios. Each of these preliminary slices is populated in the list <sliceProfiles>
@@ -168,7 +215,20 @@ namespace AutoSlicing {
 	{
 		//sliceProfiles holds the pseudo-slices with ratios and other properties
 		sliceProfiles = gcnew List<sliceProperties ^>();
-		int iCount = peakProfiles->Count;
+		int iCount, iDiff;
+
+		//Making sure the index is not going out of bound for samples with troughs <= peaks
+		if(peakProfiles->Count < troughProfiles->Count)
+			iCount = peakProfiles->Count;
+		else
+		{
+			iDiff = (peakProfiles->Count - troughProfiles->Count);
+			if(iDiff == 0)
+				iCount = (peakProfiles->Count-1);
+			else
+				iCount = (peakProfiles->Count-iDiff-1);
+		}
+
 		int i = 0, j, iStart, iEnd, iPeak;
 		double tMolecules = 0.0, ratio1, ratio2, totalMolecules = 0.0, upperMolecules = 0.0, lowerMolecules = 0.0;
 		while(i < (iCount))

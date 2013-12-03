@@ -2,10 +2,10 @@
 #include "lengthprofile.h"
 #include "PreselectionItem.h"
 #include "AutoSliceOptions.h"
-
 using namespace System::Collections::Generic;
 
-#define VERY_SMALL       (1e-12) 
+#define VERY_SMALL       (1e-12)
+#define EQUALITY_TOLERANCE (1e-6)
 
 namespace AutoSlicing {
 
@@ -69,6 +69,8 @@ namespace AutoSlicing {
 			bool EstimateTrough2PeakRatios(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1, String ^sErr);
 			bool EvaluatePercentMolecules(const double, const double, array<LengthHistogram ^> ^lengthHisto1);
 			bool AutoBoundaryDetection(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1, String ^sErr);
+			int FindNextPosition(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1, int iCurrentPosition);
+			int FindPreviousPosition(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1, int iCurrentPosition);
 	};
 }
 
