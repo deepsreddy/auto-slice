@@ -139,6 +139,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AutoSlice.h" />
+    <ClInclude Include="AutoSliceOptions.h" />
     <ClInclude Include="BasicFunctions.h" />
     <ClInclude Include="LengthHistogram.h" />
     <ClInclude Include="LengthProfile.h" />
@@ -152,6 +153,7 @@
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="AutoSlice.cpp" />
+    <ClCompile Include="AutoSliceOptions.cpp" />
     <ClCompile Include="BasicFunctions.cpp" />
     <ClCompile Include="LengthProfile.cpp" />
     <ClCompile Include="PreselectionItem.cpp" />
