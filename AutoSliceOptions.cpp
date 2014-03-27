@@ -22,6 +22,9 @@ namespace AutoSlicing {
 		_dMinimumUpperPercentMolecules = sXMLOptions->_dMinimumUpperPercentMolecules;
 		_dYScoreLowerLengthThreshold = sXMLOptions->_dYScoreLowerLengthThreshold;
 		_dYScoreUpperLengthThreshold = sXMLOptions->_dYScoreUpperLengthThreshold;
+		_dSuperSliceMoleculesThreshold = sXMLOptions->_dSuperSliceMoleculesThreshold;
+		_dSuperSlicePercentMoleculesThreshold = sXMLOptions->_dSuperSlicePercentMoleculesThreshold;
+		_bSuperSliceOption = sXMLOptions->_bSuperSliceOption;
 	}
 	//=============================================================================================================
 	//Setting default values if the settings file is not loaded
@@ -36,6 +39,9 @@ namespace AutoSlicing {
 		_dMinimumUpperPercentMolecules = 0.5;
 		_dYScoreLowerLengthThreshold = 0.06;
 		_dYScoreUpperLengthThreshold = 0.15;
+		_dSuperSliceMoleculesThreshold = 50.0;
+		_dSuperSlicePercentMoleculesThreshold = 10.0;
+		_bSuperSliceOption = 1;
 
 		//Just in case: eliminate old format file
 		System::String ^ aPath      = System::Reflection::Assembly::GetExecutingAssembly()->Location;
@@ -73,6 +79,11 @@ namespace AutoSlicing {
 				ReadDoubleElement(reader, "YScoreLowerLengthThreshold", _dYScoreLowerLengthThreshold);
 				ReadDoubleElement(reader, "YScoreUpperLengthThreshold", _dYScoreUpperLengthThreshold);
 
+				//Introduced the super slice options
+				ReadDoubleElement(reader, "SuperSliceOption", _bSuperSliceOption);
+				ReadDoubleElement(reader, "SuperSliceMoleculesThreshold", _dSuperSliceMoleculesThreshold);
+				ReadDoubleElement(reader, "SuperSlicePercentMoleculesThreshold", _dSuperSlicePercentMoleculesThreshold);
+
 				//read closing group tag
 				reader->Read();
 			}
@@ -81,6 +92,7 @@ namespace AutoSlicing {
 				//Console::WriteLine(L"Error in reading xml settings: {0}", gcnew String(str));
 				reader->Close();
 				fs->Close();
+				SetDefaultParameters();
 				throw str;
 			}
 			catch(...)
@@ -88,6 +100,7 @@ namespace AutoSlicing {
 				//Console::WriteLine(L"Error in reading xml settings");
 				reader->Close();
 				fs->Close();
+				SetDefaultParameters();
 				throw;
 			}
 
@@ -147,6 +160,11 @@ namespace AutoSlicing {
 			WriteElement(writer, "MinimumUpperPercentMolecules", (_dMinimumUpperPercentMolecules));
 			WriteElement(writer, "YScoreLowerLengthThreshold", (_dYScoreLowerLengthThreshold));
 			WriteElement(writer, "YScoreUpperLengthThreshold", (_dYScoreUpperLengthThreshold));
+
+			//Introduced the super slice options
+			WriteElement(writer, "SuperSliceOption", _bSuperSliceOption);
+			WriteElement(writer, "SuperSliceMoleculesThreshold", _dSuperSliceMoleculesThreshold);
+			WriteElement(writer, "SuperSlicePercentMoleculesThreshold", _dSuperSlicePercentMoleculesThreshold);
 
 			//Close tag for the root element.
 			writer->WriteEndElement(); //"AutoSlicingOptions"

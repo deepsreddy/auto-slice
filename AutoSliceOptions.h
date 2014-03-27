@@ -30,6 +30,9 @@ namespace AutoSlicing {
 			double _dMinimumUpperPercentMolecules;
 			double _dYScoreLowerLengthThreshold;
 			double _dYScoreUpperLengthThreshold;
+			double _dSuperSliceMoleculesThreshold;
+			double _dSuperSlicePercentMoleculesThreshold;
+			double _bSuperSliceOption;
 	};
 }
 

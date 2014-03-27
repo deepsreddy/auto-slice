@@ -62,6 +62,7 @@ namespace AutoSlicing {
 			double _LowerSliceMolecules;
 			int _iLowerSliceCount;
 			int _iUpperSliceCount;
+			int	_iFinalSliceCount;
 			double _AverageSliceMolecules;
 			CAutoSliceOptions sXMLOptions;
 
@@ -71,6 +72,11 @@ namespace AutoSlicing {
 			bool AutoBoundaryDetection(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1, String ^sErr);
 			int FindNextPosition(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1, int iCurrentPosition);
 			int FindPreviousPosition(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1, int iCurrentPosition);
+			bool AppendSuperSlice(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1);
+			int GetIndex(int iCount, int iNthSlice);
+			double GetSumMoleculeDensity(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1, int iStartIndex, int iEndIndex);
+			void OutputBoundaries();
+			void CopySlices();
 	};
 }
 

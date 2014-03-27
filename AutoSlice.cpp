@@ -39,6 +39,19 @@ namespace AutoSlicing {
 			return false;
 		}
 
+		//Check for super slice
+		if(sXMLOptions._bSuperSliceOption > 0 && _iFinalSliceCount > 2)
+		{
+			if(!AppendSuperSlice(iLengthHistoSize, lengthHisto1))
+				Console::WriteLine(L"Cannot append the super slice");
+		}
+		
+		//Output boundaries to Boundaries.txt
+		OutputBoundaries();
+
+		//Copy slice boundary information to FSS Preselection list
+		CopySlices();
+
 		return true;
 	}
 
@@ -451,16 +464,106 @@ namespace AutoSlicing {
 			index--;
 		}
 
+		_iFinalSliceCount = iSlices;
 
-		index = 0;
+		return true;
+	}
 
+	//Check for if a superslice need to be appended
+	bool CAutoSlice::AppendSuperSlice(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1)
+	{
+		int iSlices = (finalSlices->Count);
+		int iLastSliceIndex = GetIndex(iSlices, _iFinalSliceCount);
+		
+		if(iLastSliceIndex < 0)
+		{
+			Console::WriteLine("Last slice index < 0");
+			return false;
+		}
+
+		int iPenultimateSliceIndex = GetIndex(iSlices, (_iFinalSliceCount-1));
+
+		if(iPenultimateSliceIndex < 0)
+		{
+			Console::WriteLine("Penultimate slice index < 0");
+			return false;
+		}
+
+		int iStartIndex = (int) (finalSlices[iPenultimateSliceIndex]->_rightBoundary - lengthHisto1[0]->_XCoordinate);
+		int iEndIndex = iLengthHistoSize;
+		double dSuperSliceMolecules1 = GetSumMoleculeDensity(iLengthHistoSize, lengthHisto1, iStartIndex, iEndIndex);
+
+		iStartIndex = (int) (finalSlices[iLastSliceIndex]->_rightBoundary - lengthHisto1[0]->_XCoordinate);
+		double dSuperSliceMolecules2 = GetSumMoleculeDensity(iLengthHistoSize, lengthHisto1, iStartIndex, iEndIndex);
+
+		finalSliceProperties ^tempSlice = gcnew  finalSliceProperties();
+		if(dSuperSliceMolecules1 >= sXMLOptions._dSuperSliceMoleculesThreshold || dSuperSliceMolecules2 >= sXMLOptions._dSuperSliceMoleculesThreshold)
+		{
+			//finalSliceProperties ^tempSlice = gcnew  finalSliceProperties();
+			tempSlice->_leftBoundary = finalSlices[iPenultimateSliceIndex]->_rightBoundary;
+			tempSlice->_rightBoundary = lengthHisto1[iLengthHistoSize-1]->_XCoordinate;
+			tempSlice->_totalMolecules = dSuperSliceMolecules1;
+			tempSlice->_real = true;
+			finalSlices->Add(tempSlice);
+			_iFinalSliceCount++;
+		}
+		else
+		{
+			Console::WriteLine("#Molecules < Threshold: {0}, {1}, {2}", dSuperSliceMolecules1, tempSlice->_leftBoundary, iLengthHistoSize);
+			return false;
+		}
+
+		return true;
+	}
+
+	//Get index of the nth slice
+	int CAutoSlice::GetIndex(int iCount, int iNthSlice)
+	{
+		int iIndex = 0, iIndexNthSlice = 0;
+		while(iIndex < iCount)
+		{
+			if(finalSlices[iIndex]->_real)
+			{
+				iIndexNthSlice++;
+
+				if(iIndexNthSlice == iNthSlice)
+					return iIndex;
+			}
+
+			iIndex++;
+		}
+
+		return -1;
+	}
+
+	//Get molecule density
+	double CAutoSlice::GetSumMoleculeDensity(int iLengthHistoSize, array<LengthHistogram ^> ^lengthHisto1, int iStartIndex, int iEndIndex)
+	{
+		double dSumDensity = 0.0;
+
+		while(iStartIndex < iEndIndex && iStartIndex < iLengthHistoSize)
+		{
+			dSumDensity += lengthHisto1[iStartIndex]->_densitySummation;
+			iStartIndex++;
+		}
+
+		return dSumDensity;
+	}
+
+	//Output boundaries file
+	void CAutoSlice::OutputBoundaries()
+	{
+		//Outputting the boundaries to the Boundaries.txt
+		//FSS: Please note that the number of real slices is not "finalSlices->Count" but "iSlices" as outputted in this file. 
+		//FSS: These boundaries are used to output in the 'R' script file
+		int index = 0;
 		String ^fileName = gcnew String("Boundaries.txt");
 		fileName = _sDirectory + fileName;
 
 		//Convert System::String to char array to read in ofstream
 		ofstream boundariesFile((AutoSlicing::CBasicFunctions::SystemStringToCharArray(fileName)), std::iostream::out);
 		boundariesFile << "left_boundary\tright_boundary\n";
-		boundariesFile << iSlices << "\n";
+		boundariesFile << _iFinalSliceCount << "\n";
 		while(index < finalSlices->Count)
 		{
 			if(finalSlices[index]->_real)
@@ -473,10 +576,14 @@ namespace AutoSlicing {
 
 		boundariesFile.close();
 		boundariesFile.clear();
+	}
 
+	//Copy final slices to FSS preselection list
+	void CAutoSlice::CopySlices()
+	{
         //  FSS - this while loop was added...
 		// Build data to return to Preselection
-		index = 0;
+		int index = 0;
 		preselectionItems = gcnew List<PreselectionItem ^>();
 		while(index < finalSlices->Count /* && finalSlices[index]->_real */)
 		{
@@ -488,6 +595,5 @@ namespace AutoSlicing {
 			}
 			index++;
 		}
-		return true;
 	}
-}
+} // end AutoSlicing namespace
